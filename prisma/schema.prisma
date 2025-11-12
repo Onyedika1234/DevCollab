@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -13,6 +13,81 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// This is the user model representing user in the system. The id is a string UUId and is specia for each user. The email and the username are also unique for each user. The password is also stroed in the database in a secure way.
+// Each user can have multiple posts, comments, likes, followers, following and notifications. The operations will be handled carefully to prevent errors using the necessary techiques.
 model User{
   id  String @id @default(uuid())
+  name String
+  username String @unique
+  email String @unique
+  password String
+  posts Post[]
+  comments Comment[]
+  likes Like[]
+  followers Follower[] @relation("followers")
+  following Follower[] @relation("following")
+  notifications Notification[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//The post id has a unique String UUID. Each post has a title, content, tags for categorization and sorting, and also language.
+//Each post is created by a user which is targeted by the author Field via the authorId,
+// Each post can have multiple coments and likes associated with it. And it can start from the current time when created and updatedAt will be updated automatically when the post is updated. It can also start from 0 comments and likes.
+model Post{
+  id String @id @default(uuid())
+  title String
+  content String
+  tags Json
+  language String
+  author User @relation(fields: [authorId], references: [id])
+  authorId String
+  comments Comment[]
+  likes Like[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//Each commnets have unique id as String UUID. The content of the commnet is stored in the content fields. It connects to the post via the postId. IT also connects to the author via the authorId. i.e the author id is the id of the user that made the comment
+model Comment{
+  id String @id @default(uuid())
+  content String
+  author User @relation(fields: [authorId], references: [id])
+  authorId String
+  post Post @relation(fields: [postId], references: [id])
+  postId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//Each Likes have unique id as String UUID. It connects to the post via the postId. IT also connects to the user via the userId. i.e the user id is the id of the user that made the like
+model Like {
+  id String @id @default(uuid())
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  post Post @relation(fields: [postId], references: [id])
+  postId String
+  createdAt DateTime @default(now())
+}
+
+//The Follower model represents the relationship between users who follow each other. Each follower relationship has a unique id as String UUID.
+// The followerId field references the user who is following, while the followingId field references the
+
+model Follower {
+  id String @id @default(uuid())
+  follower User @relation("followers", fields: [followerId], references: [id])
+  followerId String
+  following User @relation("following", fields: [followingId], references: [id])
+  followingId String
+  createdAt DateTime @default(now())
+}
+
+//This handles the notification given to a user.
+model Notification {
+  id String @id @default(uuid())
+  content String
+  recipient User @relation(fields: [recipientId], references: [id])
+  recipientId String
+  isRead Boolean @default(false)
+  createdAt DateTime @default(now())
 }

@@ -1,0 +1,35 @@
+export const validateSignUp = (req, res, next) => {
+  let { name, username, email, password } = req.body;
+
+  //This check for any empty fields
+  if (!name || !username || !email || !password)
+    return res
+      .status(400)
+      .json({ success: false, message: "All inputs must be filled." });
+
+  //This code ensures that all inputs are fields
+  if (
+    typeof name !== "string" ||
+    typeof username !== "string" ||
+    typeof email !== "string" ||
+    typeof password !== "string"
+  )
+    return res.status(429).json({
+      success: false,
+      message: "Unprocessable entities, All inputs should be string",
+    });
+
+  //This code helps trim whitespaces
+  name = name.trim();
+  username = username.trim();
+  email = email.trim().toLowerCase();
+  password = password.trim();
+
+  req.credentials = {
+    name,
+    username,
+    email,
+    password,
+  };
+  next();
+};
