@@ -12,6 +12,7 @@ export const signUp = async (req, res) => {
 
     const existingEmailUser = await prisma.user.findUnique({
       where: { email },
+      select: { email: true },
     });
 
     if (existingEmailUser)
@@ -21,6 +22,7 @@ export const signUp = async (req, res) => {
 
     const existingUsernameUser = await prisma.user.findUnique({
       where: { username },
+      select: { username: true },
     });
 
     if (existingUsernameUser)
