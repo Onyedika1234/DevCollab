@@ -31,10 +31,10 @@
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.15.3",
     "nodemailer": "^7.0.10",
-    "nodemon": "^3.1.11",
     "redis": "^5.9.0"
   },
   "devDependencies": {
-    "prisma": "^6.19.0"
+    "prisma": "^6.19.0",
+    "nodemon": "^3.1.11"
   }
 }

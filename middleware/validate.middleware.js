@@ -33,3 +33,30 @@ export const validateSignUp = (req, res, next) => {
   };
   next();
 };
+
+export const validateLogin = (req, res, next) => {
+  let { email, password } = req.body;
+
+  //This check for any empty fields
+  if (!email || !password)
+    return res
+      .status(400)
+      .json({ success: false, message: "All inputs must be filled." });
+
+  //This code ensures that all inputs are fields
+  if (typeof email !== "string" || typeof password !== "string")
+    return res.status(429).json({
+      success: false,
+      message: "Unprocessable entities, All inputs should be string",
+    });
+
+  //This code helps trim whitespaces
+  email = email.trim().toLowerCase();
+  password = password.trim();
+
+  req.credentials = {
+    email,
+    password,
+  };
+  next();
+};
