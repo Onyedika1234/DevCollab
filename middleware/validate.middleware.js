@@ -14,7 +14,7 @@ export const validateSignUp = (req, res, next) => {
     typeof email !== "string" ||
     typeof password !== "string"
   )
-    return res.status(429).json({
+    return res.status(422).json({
       success: false,
       message: "Unprocessable entities, All inputs should be string",
     });
@@ -45,7 +45,7 @@ export const validateLogin = (req, res, next) => {
 
   //This code ensures that all inputs are fields
   if (typeof email !== "string" || typeof password !== "string")
-    return res.status(429).json({
+    return res.status(422).json({
       success: false,
       message: "Unprocessable entities, All inputs should be string",
     });
@@ -58,5 +58,16 @@ export const validateLogin = (req, res, next) => {
     email,
     password,
   };
+  next();
+};
+
+export const validateBio = (req, res, next) => {
+  const { bio } = req.body;
+
+  if (typeof bio !== "string")
+    return res
+      .status(422)
+      .json({ success: false, message: "Bio must be a string" });
+
   next();
 };
