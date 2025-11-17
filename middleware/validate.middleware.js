@@ -71,3 +71,16 @@ export const validateBio = (req, res, next) => {
 
   next();
 };
+
+export const validateFollow = (req, res, next) => {
+  let { targetId } = req.body;
+
+  if (typeof targetId !== "string")
+    return res
+      .status(422)
+      .json({ success: false, message: "followingId must be a string" });
+
+  targetId = targetId.trim();
+  req.targetId = targetId;
+  next();
+};

@@ -81,6 +81,9 @@ model Follower {
   following User @relation("following", fields: [followingId], references: [id])
   followingId String
   createdAt DateTime @default(now())
+  @@index([followerId])
+  @@index([followingId])
+  @@unique([followerId, followingId])
 }
 
 //This handles the notification given to a user.

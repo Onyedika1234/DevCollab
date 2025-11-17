@@ -2,16 +2,16 @@ import prisma from "../utils/prisma.js";
 import redisClient from "../utils/redis.js";
 export const userProfile = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { id } = req.user;
     let profile;
 
-    const redisUser = await redisClient.get(`profile/${userId}`);
+    const redisUser = await redisClient.get(`profile/${id}`);
 
     if (redisUser) {
       profile = JSON.parse(redisUser);
     } else {
       const user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id },
         select: {
           name: true,
           username: true,
@@ -22,7 +22,7 @@ export const userProfile = async (req, res) => {
         },
       });
 
-      await redisClient.setEx(`profile/${userId}`, 3600, JSON.stringify(user));
+      await redisClient.setEx(`profile/${id}`, 3600, JSON.stringify(user));
 
       profile = user;
     }
@@ -35,11 +35,11 @@ export const userProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { id } = req.user;
     const { bio } = req.body;
 
     const profile = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id },
       select: { bio: true },
     });
     if (!profile)
@@ -48,7 +48,7 @@ export const updateProfile = async (req, res) => {
         .json({ success: false, message: "User Profile not found." });
 
     const updated = await prisma.user.update({
-      where: { id: userId },
+      where: { id },
       data: { bio },
       select: {
         name: true,
@@ -59,9 +59,38 @@ export const updateProfile = async (req, res) => {
         following: true,
       },
     });
-    await redisClient.del(`profile/${userId}`);
+    await redisClient.del(`profile/${id}`);
     res.status(201).json({ success: true, updated });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const followUser = async (req, res) => {
+  try {
+    const { id } = req.user; // User id
+
+    const { targetId } = req.targetId; //Id of user you desire to follow
+
+    if (id === targetId)
+      return res
+        .status(400)
+        .json({ success: false, message: "You can't follow yourself" });
+
+    const follow = await prisma.follower.create({
+      data: {
+        followerId: id,
+      },
+    });
+
+    await redisClient.del(`profile/${id}`);
+    await redisClient.del(`profile/${followingId}`);
+
+    res.sendStatus(204);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Error following user: ${error.message}`,
+    });
   }
 };

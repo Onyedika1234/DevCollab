@@ -8,9 +8,11 @@ export const authorize = async (req, res, next) => {
     if (!token)
       return res.status(401).json({ success: false, message: "Unauthorized" });
 
-    const decoded = jwt.decode(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = decoded;
+
+    console.log(req.user);
 
     next();
   } catch (error) {

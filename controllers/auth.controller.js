@@ -38,9 +38,19 @@ export const signUp = async (req, res) => {
       data: { name, username, email, password: hashedPassword },
     }); //Creation of a new user in the db.
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    }); //Assigning a token to a user.
+    const token = jwt.sign(
+      {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      }
+    ); //Assigning a token to a user.
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -60,7 +70,7 @@ export const login = async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { email: true, password: true },
+      select: { id: true, email: true, password: true },
     });
     if (!user)
       return res.status(404).json({
@@ -75,11 +85,20 @@ export const login = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Invalid Credentials" });
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+      },
+      process.env.JWT_SECRET
+    );
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: true,
+      sameSite: "strict",
       maxAge: 604800 * 60 * 1000,
     });
 
@@ -92,6 +111,7 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   try {
     res.clearCookie("token");
+    res.clearCookie("id");
     res.sendStatus(204);
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to log out" });
