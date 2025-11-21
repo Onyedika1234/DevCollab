@@ -12,7 +12,7 @@ export const userProfile = async (req, res) => {
     } else {
       const user = await prisma.user.findUnique({
         where: { id },
-        select: {
+        include: {
           name: true,
           username: true,
           email: true,
@@ -70,23 +70,51 @@ export const followUser = async (req, res) => {
   try {
     const { id } = req.user; // User id
 
-    const { targetId } = req.targetId; //Id of user you desire to follow
+    const targetId = req.targetId; //Id of user you desire to follower
 
     if (id === targetId)
       return res
         .status(400)
         .json({ success: false, message: "You can't follow yourself" });
 
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetId },
+      select: { id: true, followers: true },
+    });
+
+    if (!targetUser)
+      return res.status(404).json({
+        success: false,
+        message: "User to be followed cannot be found.",
+      });
+
+    const alreadyFollowing = await prisma.follower.findFirst({
+      where: {
+        followerId: id,
+        followingId: targetId,
+      },
+      select: { id: true },
+    });
+
+    if (alreadyFollowing)
+      return res.status(400).json({
+        success: false,
+        message: "You are already following the user",
+      });
+
     const follow = await prisma.follower.create({
       data: {
         followerId: id,
+        followingId: targetId,
       },
     });
 
     await redisClient.del(`profile/${id}`);
-    await redisClient.del(`profile/${followingId}`);
+    await redisClient.del(`profile/${targetId}`);
 
-    res.sendStatus(204);
+    res
+      .status(200)
+      .json({ success: true, message: "User followed Successfully" });
   } catch (error) {
     res.status(500).json({
       success: false,

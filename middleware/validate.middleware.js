@@ -78,7 +78,7 @@ export const validateFollow = (req, res, next) => {
   if (typeof targetId !== "string")
     return res
       .status(422)
-      .json({ success: false, message: "followingId must be a string" });
+      .json({ success: false, message: "targetId must be a string" });
 
   targetId = targetId.trim();
   req.targetId = targetId;
