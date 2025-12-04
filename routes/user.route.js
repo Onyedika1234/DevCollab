@@ -4,6 +4,7 @@ import {
   followUser,
   updateProfile,
   userProfile,
+  unfollow,
 } from "../controllers/user.controller.js";
 import {
   validateBio,
@@ -17,5 +18,7 @@ userRouter.get("/", authorize, userProfile);
 userRouter.patch("/", authorize, validateBio, updateProfile);
 
 userRouter.post("/follow", authorize, validateFollow, followUser);
+
+userRouter.delete("/unfollow", authorize, validateFollow, unfollow);
 
 export default userRouter;

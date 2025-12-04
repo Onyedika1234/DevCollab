@@ -64,6 +64,10 @@ export const validateLogin = (req, res, next) => {
 export const validateBio = (req, res, next) => {
   const { bio } = req.body;
 
+  if (!bio)
+    return res
+      .status(400)
+      .json({ success: false, message: "Bio not found, Please input bio" });
   if (typeof bio !== "string")
     return res
       .status(422)
@@ -75,6 +79,12 @@ export const validateBio = (req, res, next) => {
 export const validateFollow = (req, res, next) => {
   let { targetId } = req.body;
 
+  if (!targetId)
+    return res.status(400).json({
+      success: false,
+      message: "TargetId not found, Please input the targetId!!!",
+    });
+
   if (typeof targetId !== "string")
     return res
       .status(422)
@@ -82,5 +92,28 @@ export const validateFollow = (req, res, next) => {
 
   targetId = targetId.trim();
   req.targetId = targetId;
+  next();
+};
+
+export const validatePost = (req, res, next) => {
+  const { title, content, tags, language } = req.body;
+
+  if (!title || !content || !tags || !language)
+    return res.status(400).json({
+      success: false,
+      message: "All creditenals are to be filled to  create post",
+    });
+
+  if (
+    typeof title !== "string" ||
+    typeof content !== "string" ||
+    Array.isArray(tags) === false ||
+    typeof language !== "string"
+  )
+    return res.status(429).json({
+      success: false,
+      message: "All inputs but be in required format",
+    });
+
   next();
 };
