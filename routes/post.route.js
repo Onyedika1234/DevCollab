@@ -1,12 +1,20 @@
 import { Router } from "express";
 import { validatePost } from "../middleware/validate.middleware.js";
+import {
+  createPost,
+  getPosts,
+  likePost,
+} from "../controllers/post.controller.js";
+import { authorize } from "../middleware/auth.middleware.js";
 
 const postRouter = Router();
 
-postRouter.post("/", validatePost, (req, res) => {
-  const body = { ...req.body };
+postRouter.post("/", authorize, validatePost, createPost);
 
-  res.json(body);
-});
+postRouter.get("/", authorize, getPosts);
+
+postRouter.patch("/:postId/like", authorize, likePost);
+
+postRouter.patch("/:postId/unlike", authorize);
 
 export default postRouter;

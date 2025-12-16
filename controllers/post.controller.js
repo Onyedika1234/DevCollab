@@ -12,10 +12,16 @@ export const createPost = async (req, res) => {
       });
 
     const createPost = await prisma.post.create({
-      data: { ...postData },
+      data: { ...postData, authorId: req.user.id },
     });
 
-    res.status(201).json({ success: true, createPost });
+    await redisClient.del("posts");
+
+    res.status(201).json({
+      success: true,
+      message: "Post created Successfully",
+      post: createPost,
+    });
   } catch (error) {
     res
       .status(500)
@@ -23,18 +29,47 @@ export const createPost = async (req, res) => {
   }
 };
 
-export const getPosts = async (req, res) => {
-  let posts;
+export const getPosts = async (_, res) => {
+  try {
+    let posts;
 
-  const post = await redisClient.get("post");
-  if (post) {
-    const postFromRedis = JSON.parse(post);
-    // posts = postFromRedis.splice()
-  } else {
-    posts = await prisma.post.findMany({
-      take: 100,
+    const cachedPosts = await redisClient.get("posts");
+    if (cachedPosts) {
+      console.log("Cached Hit");
+      posts = JSON.parse(cachedPosts);
+    } else {
+      console.log("Cache Missed");
+      posts = await prisma.post.findMany({
+        include: { author: true, likes: true, comments: true },
+        take: 100,
+      });
+      await redisClient.setEx("posts", 3600, JSON.stringify(posts));
+    }
+
+    if (posts.length === 0)
+      return res
+        .status(404)
+        .json({ success: false, message: "No post found!!!" });
+
+    res.status(200).json(posts);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      messagae: `Error getting posts: ${error.message}`,
     });
-
-    await redisClient.setEx("post", 3600, JSON.stringify(posts));
   }
 };
+
+export const likePost = async (req, res) => {
+  const { postId } = req.params;
+  const userId = req.user.id;
+
+  const post = await prisma.post.findUnique({ where: { id: postId } });
+  if (!post)
+    return res.status(404).json({
+      success: false,
+      message: "The post you want to react on cannot be found",
+    });
+};
+
+export const unlikePost = async (req, res) => {};

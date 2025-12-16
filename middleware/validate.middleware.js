@@ -1,8 +1,8 @@
 export const validateSignUp = (req, res, next) => {
-  let { name, username, email, password } = req.body;
+  let { name, username, email, password, idempotencyId } = req.body;
 
   //This check for any empty fields
-  if (!name || !username || !email || !password)
+  if (!name || !username || !email || !password || !idempotencyId)
     return res
       .status(400)
       .json({ success: false, message: "All inputs must be filled." });
@@ -12,7 +12,8 @@ export const validateSignUp = (req, res, next) => {
     typeof name !== "string" ||
     typeof username !== "string" ||
     typeof email !== "string" ||
-    typeof password !== "string"
+    typeof password !== "string" ||
+    typeof idempotencyId !== "string"
   )
     return res.status(422).json({
       success: false,
@@ -24,12 +25,14 @@ export const validateSignUp = (req, res, next) => {
   username = username.trim();
   email = email.trim().toLowerCase();
   password = password.trim();
+  idempotencyId = idempotencyId.trim();
 
   req.credentials = {
     name,
     username,
     email,
     password,
+    idempotencyId,
   };
   next();
 };

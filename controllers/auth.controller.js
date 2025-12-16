@@ -6,7 +6,20 @@ dotenv.config();
 
 export const signUp = async (req, res) => {
   try {
-    const { name, username, email, password } = req.credentials;
+    const { name, username, email, password, idempotencyId } = req.credentials;
+
+    // Check for idempotency cases
+
+    const checkIdempotency = await prisma.user.findMany({
+      where: { idempotencyId },
+    });
+
+    if (checkIdempotency)
+      return res.status(200).json({
+        success: true,
+        message: "Account created already",
+        checkIdempotency,
+      });
 
     //Check if email || username exist in the system
 
@@ -35,7 +48,7 @@ export const signUp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt); //Hashes the password for security
 
     const user = await prisma.user.create({
-      data: { name, username, email, password: hashedPassword },
+      data: { name, username, email, password: hashedPassword, bio },
     }); //Creation of a new user in the db.
 
     const token = jwt.sign(
