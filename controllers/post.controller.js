@@ -60,6 +60,45 @@ export const getPosts = async (_, res) => {
   }
 };
 
+export const getPost = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    let post;
+
+    const cachedPost = await redisClient.get(`posts/${postId}`);
+
+    if (cachedPost) {
+      post = JSON.parse(cachedPost);
+      return res.status(200).json({
+        success: true,
+        post: { ...post, totalLikes: post.likes.length },
+      });
+    } else {
+      post = await prisma.post.findUnique({
+        where: { id: postId },
+        include: { likes: true, comments: true },
+      });
+      if (!post)
+        return res
+          .status(404)
+          .json({ success: false, message: "Post not found" });
+
+      // Redis expects strings or buffers; serialize the post before storing.
+      await redisClient.setEx(`posts/${postId}`, 1800, JSON.stringify(post));
+
+      return res.status(200).json({
+        success: true,
+        post: { ...post, totalLikes: post.likes.length },
+      });
+    }
+
+    // res.status(200).json({ success: true, post });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const likePost = async (req, res) => {
   const { postId } = req.params;
   const userId = req.user.id;
@@ -70,6 +109,14 @@ export const likePost = async (req, res) => {
       success: false,
       message: "The post you want to react on cannot be found",
     });
+
+  const like = await prisma.like.create({
+    data: { userId, postId, idempotencyId: "001" },
+  });
+
+  await redisClient.del(`post/${postId}`);
+
+  res.status(200).json({ success: true, message: "Liked." });
 };
 
 export const unlikePost = async (req, res) => {};

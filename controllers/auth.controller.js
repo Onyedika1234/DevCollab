@@ -6,11 +6,12 @@ dotenv.config();
 
 export const signUp = async (req, res) => {
   try {
-    const { name, username, email, password, idempotencyId } = req.credentials;
+    const { name, username, email, password, bio, idempotencyId } =
+      req.credentials;
 
     // Check for idempotency cases
 
-    const checkIdempotency = await prisma.user.findMany({
+    const checkIdempotency = await prisma.user.findUnique({
       where: { idempotencyId },
     });
 
@@ -18,7 +19,7 @@ export const signUp = async (req, res) => {
       return res.status(200).json({
         success: true,
         message: "Account created already",
-        checkIdempotency,
+        user: checkIdempotency,
       });
 
     //Check if email || username exist in the system
@@ -48,7 +49,14 @@ export const signUp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt); //Hashes the password for security
 
     const user = await prisma.user.create({
-      data: { name, username, email, password: hashedPassword, bio },
+      data: {
+        name,
+        username,
+        email,
+        password: hashedPassword,
+        bio,
+        idempotencyId,
+      },
     }); //Creation of a new user in the db.
 
     const token = jwt.sign(
@@ -115,7 +123,7 @@ export const login = async (req, res) => {
       maxAge: 604800 * 60 * 1000,
     });
 
-    res.status(200).json({ success: true, message: "Logged in successfully" });
+    res.status(204).json({ success: true, message: "Logged in successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
