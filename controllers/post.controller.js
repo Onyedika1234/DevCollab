@@ -119,4 +119,57 @@ export const likePost = async (req, res) => {
   res.status(200).json({ success: true, message: "Liked." });
 };
 
-export const unlikePost = async (req, res) => {};
+export const unlikePost = async (req, res) => {
+  try {
+    const { likeId } = req.params;
+    if (!likeId)
+      return res
+        .status(400)
+        .json({ success: false, message: "LikeId and must be provided." });
+
+    // const postExist = await prisma.post.findUnique({ where: { id: postId } });
+    // if (!postExist)
+    //   return res.status(404).json({ success: false, message: "Post not found" });
+
+    const likeExist = await prisma.like.findUnique({ where: { id: likeId } });
+
+    if (!likeExist)
+      return res
+        .status(404)
+        .json({ success: false, message: "Like action not found" });
+
+    await prisma.like.delete({ where: { id: likeId } });
+
+    return res.sendStatus(204);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Unable to unlike due to: ${error.messagae}`,
+    });
+  }
+};
+
+export const createcomment = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { content, idempotencyId } = req.body;
+    const userId = req.user.id;
+
+    const postExist = await prisma.post.findUnique({ where: { id: postId } });
+    if (!postExist)
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+
+    const newComment = await prisma.comment.create({
+      data: { content, postId, authorId: userId, idempotencyId },
+    });
+
+    res.status(201).json({ success: true, comment: newComment });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Unable to comment due to: ${error.message}`,
+    });
+  }
+};

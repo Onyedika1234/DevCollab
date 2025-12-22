@@ -123,3 +123,27 @@ export const validatePost = (req, res, next) => {
 
   next();
 };
+
+export const validateComment = (req, res, next) => {
+  const { content, idempotencyId } = req.body;
+  const { postId } = req.params;
+
+  if (!postId || !content || !idempotencyId)
+    return res.status(400).json({
+      success: false,
+      message: "PostId and contents must be provided.",
+    });
+  if (
+    typeof postId !== "string" ||
+    typeof content !== "string" ||
+    typeof idempotencyId !== "string"
+  )
+    return res
+      .status(429)
+      .json({
+        success: false,
+        message: "postId, content, and idempotencyId must be strings",
+      });
+
+  next();
+};
