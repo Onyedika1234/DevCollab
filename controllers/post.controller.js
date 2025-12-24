@@ -1,6 +1,7 @@
 import redisClient from "../utils/redis.js";
 import prisma from "../utils/prisma.js";
 
+//Creating post
 export const createPost = async (req, res) => {
   try {
     const postData = { ...req.body };
@@ -29,7 +30,11 @@ export const createPost = async (req, res) => {
   }
 };
 
-export const getPosts = async (_, res) => {
+//Get all post plus the filtering logic
+export const getPosts = async (req, res) => {
+  let { filter } = req.query;
+
+  filter = filter ? filter : "";
   try {
     let posts;
 
@@ -51,7 +56,18 @@ export const getPosts = async (_, res) => {
         .status(404)
         .json({ success: false, message: "No post found!!!" });
 
-    res.status(200).json(posts);
+    const filteredPost = posts.filter((post) => {
+      return post.language.toLowerCase().includes(filter);
+    });
+
+    //Filtering logic.
+    if (!filteredPost)
+      return res.status(404).json({
+        success: false,
+        message: "Posts suiting the filter option cannot be found.",
+      });
+
+    res.status(200).json({ posts: filteredPost });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -60,6 +76,7 @@ export const getPosts = async (_, res) => {
   }
 };
 
+//Getting a single post
 export const getPost = async (req, res) => {
   const { postId } = req.params;
 

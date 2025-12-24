@@ -12,8 +12,6 @@ export const authorize = async (req, res, next) => {
 
     req.user = decoded;
 
-    console.log(req.user);
-
     next();
   } catch (error) {
     res.status(500).json({ success: false, message: "Error authorizing user" });
