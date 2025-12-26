@@ -2,8 +2,7 @@ import prisma from "../utils/prisma.js";
 
 export const createComment = async (req, res) => {
   try {
-    const { postId } = req.params;
-    const { content, idempotencyId } = req.body;
+    const { content, idempotencyId, postId } = req.comment;
     const userId = req.user.id;
 
     const postExist = await prisma.post.findUnique({ where: { id: postId } });

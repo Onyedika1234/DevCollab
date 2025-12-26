@@ -1,10 +1,11 @@
 import redisClient from "../utils/redis.js";
 import prisma from "../utils/prisma.js";
+import { postdto } from "../utils/dtos.js";
 
 //Creating post
 export const createPost = async (req, res) => {
   try {
-    const postData = { ...req.body };
+    const postData = { ...postdto(req.body) };
 
     if (!postData)
       res.status(404).json({

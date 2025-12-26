@@ -100,9 +100,9 @@ export const validateFollow = (req, res, next) => {
 };
 
 export const validatePost = (req, res, next) => {
-  const { title, content, tags, language } = req.body;
+  const { title, content, tags, language, idempotencyId } = postdto(req.body);
 
-  if (!title || !content || !tags || !language)
+  if (!title || !content || !tags || !language || !idempotencyId)
     return res.status(400).json({
       success: false,
       message: "All creditenals are to be filled to  create post",
@@ -112,7 +112,8 @@ export const validatePost = (req, res, next) => {
     typeof title !== "string" ||
     typeof content !== "string" ||
     Array.isArray(tags) === false ||
-    typeof language !== "string"
+    typeof language !== "string" ||
+    typeof idempotencyId !== "string"
   )
     return res.status(429).json({
       success: false,
@@ -123,7 +124,7 @@ export const validatePost = (req, res, next) => {
 };
 
 export const validateComment = (req, res, next) => {
-  const { content, idempotencyId } = req.body;
+  const { content, idempotencyId } = postdto(req.body);
   const { postId } = req.params;
 
   if (!postId || !content || !idempotencyId)
@@ -140,6 +141,8 @@ export const validateComment = (req, res, next) => {
       success: false,
       message: "postId, content, and idempotencyId must be strings",
     });
+
+  req.comment = { content, idempotencyId, postId };
 
   next();
 };
