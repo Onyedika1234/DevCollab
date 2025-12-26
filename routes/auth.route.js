@@ -14,6 +14,7 @@ authRouter.post("/signup", authRateLimiter, validateSignUp, signUp);
 //Login route
 authRouter.post("/login", authRateLimiter, validateLogin, login);
 
+//Logout route
 authRouter.post("/logout", authRateLimiter, logout);
 
 export default authRouter;

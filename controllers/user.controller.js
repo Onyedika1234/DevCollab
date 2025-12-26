@@ -1,5 +1,6 @@
 import prisma from "../utils/prisma.js";
 import redisClient from "../utils/redis.js";
+import { followdto } from "../utils/dtos.js";
 export const userProfile = async (req, res) => {
   try {
     const { id } = req.user;
@@ -119,6 +120,11 @@ export const followUser = async (req, res) => {
     const { id } = req.user; // User id
 
     const targetId = req.targetId; //Id of user you desire to follower
+    const idempotencyId = followdto(req.body).idempotencyId;
+    if (!idempotencyId)
+      return res
+        .status(400)
+        .json({ success: false, message: "Idempotency Id not found" });
 
     if (id === targetId)
       return res
@@ -154,6 +160,7 @@ export const followUser = async (req, res) => {
       data: {
         followerId: id,
         followingId: targetId,
+        idempotencyId,
       },
     });
 

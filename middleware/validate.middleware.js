@@ -1,5 +1,14 @@
+import {
+  signUpDto,
+  logindto,
+  followdto,
+  commentsdto,
+  postdto,
+} from "../utils/dtos.js";
 export const validateSignUp = (req, res, next) => {
-  let { name, username, email, password, bio, idempotencyId } = req.body;
+  let { name, username, email, password, bio, idempotencyId } = signUpDto(
+    req.body
+  );
 
   //This check for any empty fields
   if (!name || !username || !email || !password || !idempotencyId || !bio)
@@ -7,7 +16,7 @@ export const validateSignUp = (req, res, next) => {
       .status(400)
       .json({ success: false, message: "All inputs must be filled." });
 
-  //This code ensures that all inputs are fields
+  //This code ensures that all inputs are fields are of the correct data types
   if (
     typeof name !== "string" ||
     typeof username !== "string" ||
@@ -21,14 +30,6 @@ export const validateSignUp = (req, res, next) => {
       message: "Unprocessable entities, All inputs should be string",
     });
 
-  //This code helps trim whitespaces
-  name = name.trim();
-  username = username.trim();
-  email = email.trim().toLowerCase();
-  password = password.trim();
-  idempotencyId = idempotencyId.trim();
-  bio = bio.trim();
-
   req.credentials = {
     name,
     username,
@@ -41,7 +42,7 @@ export const validateSignUp = (req, res, next) => {
 };
 
 export const validateLogin = (req, res, next) => {
-  let { email, password } = req.body;
+  let { email, password } = logindto(req.body);
 
   //This check for any empty fields
   if (!email || !password)
@@ -56,10 +57,6 @@ export const validateLogin = (req, res, next) => {
       message: "Unprocessable entities, All inputs should be string",
     });
 
-  //This code helps trim whitespaces
-  email = email.trim().toLowerCase();
-  password = password.trim();
-
   req.credentials = {
     email,
     password,
@@ -68,7 +65,7 @@ export const validateLogin = (req, res, next) => {
 };
 
 export const validateBio = (req, res, next) => {
-  const { bio } = req.body;
+  const { bio } = biodto(req.body);
 
   if (!bio)
     return res
@@ -83,7 +80,8 @@ export const validateBio = (req, res, next) => {
 };
 
 export const validateFollow = (req, res, next) => {
-  let { targetId } = req.body;
+  // let { targetId, idempotencyId } = followdto(req.body);
+  let targetId = followdto(req.body).targetId;
 
   if (!targetId)
     return res.status(400).json({
@@ -138,12 +136,10 @@ export const validateComment = (req, res, next) => {
     typeof content !== "string" ||
     typeof idempotencyId !== "string"
   )
-    return res
-      .status(429)
-      .json({
-        success: false,
-        message: "postId, content, and idempotencyId must be strings",
-      });
+    return res.status(429).json({
+      success: false,
+      message: "postId, content, and idempotencyId must be strings",
+    });
 
   next();
 };
