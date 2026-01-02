@@ -43,3 +43,25 @@ export const commentsdto = (body) => {
     idempotencyId: body.idempotencyId.trim(),
   };
 };
+
+export const postOutputDto = (post) => {
+  const newFormat = post.map((post) => {
+    return {
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      tags: post.tags,
+      language: post.language,
+      author: {
+        name: post.author.name,
+        username: post.author.username,
+        email: post.author.email,
+        bio: post.author.bio,
+      },
+      likes: post.likes,
+      comment: post.comments,
+    };
+  });
+
+  return newFormat;
+};

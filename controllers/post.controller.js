@@ -1,6 +1,6 @@
 import redisClient from "../utils/redis.js";
 import prisma from "../utils/prisma.js";
-import { postdto } from "../utils/dtos.js";
+import { postdto, postOutputDto } from "../utils/dtos.js";
 
 //Creating post
 export const createPost = async (req, res) => {
@@ -49,7 +49,11 @@ export const getPosts = async (req, res) => {
         include: { author: true, likes: true, comments: true },
         take: 100,
       });
-      await redisClient.setEx("posts", 3600, JSON.stringify(posts));
+      await redisClient.setEx(
+        "posts",
+        3600,
+        JSON.stringify(postOutputDto(posts))
+      );
     }
 
     if (posts.length === 0)
@@ -68,7 +72,7 @@ export const getPosts = async (req, res) => {
         message: "Posts suiting the filter option cannot be found.",
       });
 
-    res.status(200).json({ posts: filteredPost });
+    res.status(200).json({ posts: postOutputDto(filteredPost) });
   } catch (error) {
     res.status(500).json({
       success: false,
