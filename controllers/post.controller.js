@@ -120,3 +120,39 @@ export const getPost = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+//Getting posts of a particular user
+
+export const getUserPosts = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let posts;
+
+    const cachedUserPosts = await redisClient.get(`userposts/${userId}`);
+
+    if (cachedUserPosts) {
+      posts = JSON.parse(cachedUserPosts);
+    } else {
+      posts = await prisma.post.findMany({
+        where: { authorId: userId },
+        include: { likes: true, comments: true },
+        take: 100,
+      });
+
+      await redisClient.setEx(
+        `userposts/${userId}`,
+        3600,
+        JSON.stringify(postOutputDto(posts))
+      );
+    }
+
+    if (posts.length === 0)
+      res
+        .status(404)
+        .json({ success: false, message: "No posts found for this user" });
+
+    res.status(200).json({ success: true, posts: postOutputDto(posts) });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
