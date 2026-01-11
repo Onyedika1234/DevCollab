@@ -1,18 +1,18 @@
-# DevCollab API
+# DevCollab 🚀
 
 ## Overview
 
-DevCollab is a high-performance backend infrastructure designed for developer collaboration. Built with Node.js and Express, the system leverages Prisma ORM for type-safe MySQL interactions and Redis for optimized data retrieval through server-side caching.
+DevCollab is a high-performance backend API designed for developer collaboration, featuring robust content management and social networking capabilities. Built with Node.js and Express, the system utilizes Prisma ORM for type-safe database interactions with MySQL and integrates Redis for optimized data retrieval and caching.
 
 ## Features
 
-- Node.js & Express: Core server-side framework
-- Prisma ORM: Database modeling and migration management
-- Redis: Caching layer for posts and user profiles to reduce database load
-- JWT & Cookie-Parser: Secure, stateless authentication using HTTP-only cookies
-- Express Rate Limit: Protection against brute-force attacks on sensitive routes
-- Helmet & CORS: Production-grade security headers and cross-origin resource sharing
-- Idempotency Support: Prevention of duplicate actions for critical operations like registration and comments
+- Node.js & Express: RESTful API architecture with modular routing.
+- Prisma ORM: Schema management and type-safe queries for MySQL.
+- Redis Caching: Strategic caching for user profiles and post feeds to reduce database load.
+- Authentication: Secure session management via JWT and HTTP-only cookies.
+- Rate Limiting: Global and route-specific protection against brute-force attacks.
+- Idempotency: Implementation of idempotency keys to ensure request safety and prevent duplicate operations.
+- Data Transfer Objects (DTO): Structured data normalization for both requests and responses.
 
 ## Getting Started
 
@@ -22,18 +22,14 @@ DevCollab is a high-performance backend infrastructure designed for developer co
    ```bash
    git clone https://github.com/Onyedika1234/DevCollab.git
    ```
-2. Navigate to the project directory:
-   ```bash
-   cd DevCollab
-   ```
-3. Install dependencies:
+2. Install dependencies:
    ```bash
    npm install
    ```
-4. Set up the database:
+3. Configure the database and environment variables (see below).
+4. Generate Prisma client:
    ```bash
    npx prisma generate
-   npx prisma db push
    ```
 5. Start the development server:
    ```bash
@@ -42,12 +38,12 @@ DevCollab is a high-performance backend infrastructure designed for developer co
 
 ### Environment Variables
 
-Create a `.env` file in the root directory and include the following:
+Create a `.env` file in the root directory and provide the following:
 
 ```env
-PORT=5000
+PORT=3000
 DATABASE_URL="mysql://user:password@localhost:3306/devcollab"
-JWT_SECRET="your_secure_random_secret"
+JWT_SECRET="your_secure_secret_key"
 JWT_EXPIRES_IN="7d"
 ```
 
@@ -55,7 +51,7 @@ JWT_EXPIRES_IN="7d"
 
 ### Base URL
 
-`http://localhost:5000`
+`http://localhost:3000`
 
 ### Endpoints
 
@@ -68,9 +64,9 @@ JWT_EXPIRES_IN="7d"
   "name": "John Doe",
   "username": "johndoe",
   "email": "john@example.com",
-  "password": "securepassword123",
-  "bio": "Full-stack developer looking for collaborators",
-  "idempotencyId": "unique-request-uuid"
+  "password": "password123",
+  "bio": "Backend Engineer",
+  "idempotencyId": "unique-uuid-v4"
 }
 ```
 
@@ -79,11 +75,11 @@ JWT_EXPIRES_IN="7d"
 ```json
 {
   "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5...",
+  "token": "eyJhbGciOiJIUzI1...",
   "user": {
     "id": "uuid",
     "name": "John Doe",
-    "username": "johndoe"
+    "username": "@johndoe"
   }
 }
 ```
@@ -91,7 +87,7 @@ JWT_EXPIRES_IN="7d"
 **Errors**:
 
 - 400: Email or Username already exists
-- 422: Validation error (all fields must be strings)
+- 422: Validation error (all inputs must be strings)
 
 #### POST /auth/login
 
@@ -100,7 +96,7 @@ JWT_EXPIRES_IN="7d"
 ```json
 {
   "email": "john@example.com",
-  "password": "securepassword123"
+  "password": "password123"
 }
 ```
 
@@ -116,21 +112,19 @@ JWT_EXPIRES_IN="7d"
 **Errors**:
 
 - 404: User not found
-- 400: Invalid credentials
+- 400: Invalid Credentials
 
 #### POST /auth/logout
 
 **Request**:
-`No payload required (Clears auth cookies)`
-
+`None (Requires Authentication Cookie)`
 **Response**:
-`Status 204 No Content`
+`204 No Content`
 
 #### GET /user
 
 **Request**:
-`Authenticated Request (Cookie: token)`
-
+`None (Requires Authentication Cookie)`
 **Response**:
 
 ```json
@@ -139,11 +133,19 @@ JWT_EXPIRES_IN="7d"
   "profile": {
     "id": "uuid",
     "name": "John Doe",
+    "posts": [],
     "followers": [],
     "following": []
   }
 }
 ```
+
+#### GET /user/:targetId
+
+**Request**:
+`URL Parameter: targetId`
+**Response**:
+`User profile object including posts and follower counts`
 
 #### PATCH /user
 
@@ -151,21 +153,12 @@ JWT_EXPIRES_IN="7d"
 
 ```json
 {
-  "bio": "Updated developer bio"
+  "bio": "Updated bio content"
 }
 ```
 
 **Response**:
-
-```json
-{
-  "success": true,
-  "updated": {
-    "name": "John Doe",
-    "bio": "Updated developer bio"
-  }
-}
-```
+`Updated user profile object`
 
 #### POST /user/follow
 
@@ -173,7 +166,8 @@ JWT_EXPIRES_IN="7d"
 
 ```json
 {
-  "targetId": "user-uuid-to-follow"
+  "targetId": "uuid-of-user-to-follow",
+  "idempotencyId": "unique-key"
 }
 ```
 
@@ -192,12 +186,12 @@ JWT_EXPIRES_IN="7d"
 
 ```json
 {
-  "targetId": "user-uuid-to-unfollow"
+  "targetId": "uuid-of-user-to-unfollow"
 }
 ```
 
 **Response**:
-`Status 204 No Content`
+`204 No Content`
 
 #### POST /posts
 
@@ -205,11 +199,11 @@ JWT_EXPIRES_IN="7d"
 
 ```json
 {
-  "title": "Scaling Node.js",
-  "content": "Detailed article content...",
-  "tags": ["nodejs", "backend"],
-  "language": "javascript",
-  "idempotencyId": "unique-post-uuid"
+  "title": "Scaling Node.js APIs",
+  "content": "Full article content here...",
+  "tags": ["nodejs", "scaling"],
+  "language": "Javascript",
+  "idempotencyId": "unique-post-id"
 }
 ```
 
@@ -218,61 +212,50 @@ JWT_EXPIRES_IN="7d"
 ```json
 {
   "success": true,
-  "message": "Post created Successfully",
-  "post": { "id": "uuid", "title": "Scaling Node.js" }
+  "post": { "id": "uuid", "title": "Scaling Node.js APIs" }
 }
 ```
 
 #### GET /posts
 
 **Request**:
-`No payload required`
-
+`Query Param: ?filter=javascript (Optional)`
 **Response**:
 
 ```json
-[
-  {
-    "id": "uuid",
-    "title": "Scaling Node.js",
-    "author": { "name": "John Doe" },
-    "likes": [],
-    "comments": []
-  }
-]
+{
+  "posts": [
+    {
+      "id": "uuid",
+      "title": "Title",
+      "author": { "name": "Author Name" },
+      "likes": [],
+      "comment": []
+    }
+  ]
+}
 ```
 
 #### GET /posts/:postId
 
 **Request**:
-`Path Parameter: postId`
-
+`URL Parameter: postId`
 **Response**:
-
-```json
-{
-  "success": true,
-  "post": {
-    "id": "uuid",
-    "title": "Scaling Node.js",
-    "totalLikes": 5
-  }
-}
-```
+`Post object with likes count and comments`
 
 #### PATCH /posts/:postId/like
 
 **Request**:
-`Path Parameter: postId`
-
+`URL Parameter: postId`
 **Response**:
+`200 OK - Liked`
 
-```json
-{
-  "success": true,
-  "message": "Liked."
-}
-```
+#### PATCH /posts/:postId/unlike
+
+**Request**:
+`URL Parameter: likeId`
+**Response**:
+`240 No Content`
 
 #### POST /posts/:postId/comment
 
@@ -280,49 +263,51 @@ JWT_EXPIRES_IN="7d"
 
 ```json
 {
-  "content": "This is a great post!",
-  "idempotencyId": "unique-comment-uuid"
+  "content": "Great article!",
+  "idempotencyId": "unique-comment-id"
 }
 ```
 
 **Response**:
+`Created comment object`
 
-```json
-{
-  "success": true,
-  "comment": {
-    "id": "uuid",
-    "content": "This is a great post!"
-  }
-}
-```
+#### GET /posts/:postId/comments
+
+**Request**:
+`URL Parameter: postId`
+**Response**:
+`Array of comments with author details`
 
 ## Technologies Used
 
-| Technology                        | Purpose                     |
-| :-------------------------------- | :-------------------------- |
-| [Node.js](https://nodejs.org/)    | Runtime Environment         |
-| [Express](https://expressjs.com/) | Web Framework               |
-| [Prisma](https://www.prisma.io/)  | ORM for Database Management |
-| [MySQL](https://www.mysql.com/)   | Relational Database         |
-| [Redis](https://redis.io/)        | Caching and Performance     |
-| [JWT](https://jwt.io/)            | Secure Authentication       |
+| Technology   | Purpose                     |
+| :----------- | :-------------------------- |
+| **Node.js**  | Runtime Environment         |
+| **Express**  | Web Framework               |
+| **Prisma**   | ORM & Database Management   |
+| **MySQL**    | Primary Relational Database |
+| **Redis**    | In-memory Data Caching      |
+| **JWT**      | Secure Authentication       |
+| **BcryptJS** | Password Hashing            |
 
 ## Contributing
 
-- Fork the project and create a new branch.
-- Ensure all logic includes appropriate validation middleware.
-- Maintain the idempotency pattern for new write operations.
-- Submit a pull request with a detailed summary of changes.
+- 🤝 Fork the repository.
+- 🌿 Create a feature branch: `git checkout -b feature/AmazingFeature`.
+- 💾 Commit your changes: `git commit -m 'Add some AmazingFeature'`.
+- 🚀 Push to the branch: `git push origin feature/AmazingFeature`.
+- ✉️ Open a Pull Request.
 
 ## Author Info
 
 - **GitHub**: [Onyedika1234](https://github.com/Onyedika1234)
 - **LinkedIn**: [Nnagbo Onyedika Emmanuel](https://www.linkedin.com/in/onyedika-nnagbo-772095341/)
-- **Twitter**: [AlexCode](https://x.com/OnyedikaN59023)
+- **Twitter**: [@OnyedikaN59023](https://x.com/OnyedikaN59023)
 
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+---
+
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
+![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
+![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)

@@ -145,6 +145,7 @@ export const getUserProfileById = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 export const updateProfile = async (req, res) => {
   try {
     const { id } = req.user;
