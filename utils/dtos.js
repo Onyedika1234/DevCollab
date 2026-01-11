@@ -1,7 +1,7 @@
 export const signUpDto = (body) => {
   return {
     name: body.name.trim(),
-    username: body.username.trim(),
+    username: body.username.trim().toLowerCase(),
     email: body.email.trim().toLowerCase(),
     password: body.password.trim(),
     idempotencyId: body.idempotencyId.trim(),
@@ -31,7 +31,7 @@ export const postdto = (body) => {
   return {
     title: body.title.trim(),
     content: body.content.trim(),
-    tags,
+    tags: body.tags,
     language: body.language.trim(),
     idempotencyId: body.idempotencyId.trim(),
   };

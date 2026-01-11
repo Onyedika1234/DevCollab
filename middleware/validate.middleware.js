@@ -32,7 +32,7 @@ export const validateSignUp = (req, res, next) => {
 
   req.credentials = {
     name,
-    username,
+    username: `@${username}`,
     email,
     password,
     bio,

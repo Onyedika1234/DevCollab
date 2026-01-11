@@ -8,7 +8,7 @@ export const createPost = async (req, res) => {
     const postData = { ...postdto(req.body) };
 
     if (!postData)
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         message: "Couldn't get the post data from the user",
       });
@@ -76,7 +76,7 @@ export const getPosts = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      messagae: `Error getting posts: ${error.message}`,
+      message: `Error getting posts: ${error.message}`,
     });
   }
 };
@@ -126,17 +126,23 @@ export const getPost = async (req, res) => {
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
+
     let posts;
 
     const cachedUserPosts = await redisClient.get(`userposts/${userId}`);
 
     if (cachedUserPosts) {
+      console.log("Cache Hit");
       posts = JSON.parse(cachedUserPosts);
+      // return res
+      //   .status(200)
+      //   .json({ success: true, posts: postOutputDto(posts) });
     } else {
+      console.log("Cache Missed");
       posts = await prisma.post.findMany({
         where: { authorId: userId },
         include: { likes: true, comments: true },
-        take: 100,
+        // take: 100,
       });
 
       await redisClient.setEx(
@@ -144,14 +150,18 @@ export const getUserPosts = async (req, res) => {
         3600,
         JSON.stringify(postOutputDto(posts))
       );
+
+      // return res
+      //   .status(200)
+      //   .json({ success: true, posts: postOutputDto(posts) });
     }
 
     if (posts.length === 0)
-      res
+      return res
         .status(404)
         .json({ success: false, message: "No posts found for this user" });
 
-    res.status(200).json({ success: true, posts: postOutputDto(posts) });
+    res.status(200).json({ success: true, posts: posts });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

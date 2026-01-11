@@ -7,6 +7,7 @@ import {
   createPost,
   getPost,
   getPosts,
+  getUserPosts,
 } from "../controllers/post.controller.js";
 import { likePost, unlikePost } from "../controllers/like.controller.js";
 import {
@@ -25,6 +26,10 @@ postRouter.get("/", authorize, getPosts);
 
 //Get a single post by Id
 postRouter.get("/:postId", authorize, getPost);
+
+//Get posts of a specific user
+
+postRouter.get("/:userId", authorize, getUserPosts);
 
 //Like a post
 postRouter.patch("/:postId/like", authorize, likePost);
