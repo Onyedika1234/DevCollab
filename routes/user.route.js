@@ -5,6 +5,7 @@ import {
   updateProfile,
   userProfile,
   unfollow,
+  getUserProfileById,
 } from "../controllers/user.controller.js";
 import {
   validateBio,
@@ -14,6 +15,8 @@ import {
 const userRouter = Router();
 
 userRouter.get("/", authorize, userProfile);
+
+userRouter.get("/:targetId", authorize, getUserProfileById);
 
 userRouter.patch("/", authorize, validateBio, updateProfile);
 

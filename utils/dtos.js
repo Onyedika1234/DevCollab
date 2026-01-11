@@ -65,3 +65,15 @@ export const postOutputDto = (post) => {
 
   return newFormat;
 };
+
+export const userProfileDto = (profile) => {
+  return {
+    name: profile.name,
+    username: profile.username,
+    email: profile.email,
+    bio: profile.bio,
+    followers: profile.followers,
+    following: profile.following,
+    posts: profile.posts,
+  };
+};

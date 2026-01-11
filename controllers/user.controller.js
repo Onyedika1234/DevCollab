@@ -1,6 +1,6 @@
 import prisma from "../utils/prisma.js";
 import redisClient from "../utils/redis.js";
-import { followdto } from "../utils/dtos.js";
+import { followdto, userProfileDto } from "../utils/dtos.js";
 export const userProfile = async (req, res) => {
   try {
     const { id } = req.user;
@@ -44,6 +44,12 @@ export const userProfile = async (req, res) => {
           bio: true,
           createdAt: true,
           updatedAt: true,
+          posts: {
+            include: {
+              comments: true,
+              likes: true,
+            },
+          },
 
           followers: {
             include: {
@@ -82,6 +88,63 @@ export const userProfile = async (req, res) => {
   }
 };
 
+export const getUserProfileById = async (req, res) => {
+  try {
+    const { targetId } = req.params;
+
+    const profile = await prisma.user.findUnique({
+      where: { id: targetId },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        bio: true,
+        createdAt: true,
+        updatedAt: true,
+        posts: {
+          include: {
+            comments: true,
+            likes: true,
+          },
+        },
+
+        followers: {
+          include: {
+            follower: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+              },
+            },
+          },
+        },
+
+        following: {
+          include: {
+            following: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!profile)
+      return res
+        .status(404)
+        .json({ success: false, message: "User Profile not found." });
+
+    res.status(200).json({ success: true, profile });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 export const updateProfile = async (req, res) => {
   try {
     const { id } = req.user;
